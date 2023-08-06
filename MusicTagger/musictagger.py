@@ -6,32 +6,32 @@ import eyed3
 
 app = FastAPI()
 
-@app.get("/download")
-async def download_video(url: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None):
+@app.get("/youtube")
+async def download_youtube_video(url: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None):
     try:
-        # Creates pytube API YouTube object
+        # Downloades mp4 of Youtube Video to 
+        # musictagger folder using pytube API
         yt_video = YouTube(url)
-
-        # Creates pytube API Stream object with audio only
         mp4_audio_stream = yt_video.streams.get_highest_resolution()
-        
         mp4_title = mp4_audio_stream.title
-
         mp4_audio_stream.download()
 
+        # Converts mp4 video to a new mp3 file saved to 
+        # musictagger folder using moviepy API
         mp4_audio = mp.VideoFileClip(f"{mp4_title}.mp4")
-
         mp4_audio.audio.write_audiofile(f"{mp4_title}.mp3")
 
+        # Deletes mp4 video from folder
         os.remove(f"{mp4_title}.mp4")
 
+        # Adds artist, album, album artist, song title, & track number 
+        # metadata to mp3 file using eyed3 API
         mp3_file = eyed3.load(f"{mp4_title}.mp3")
         mp3_file.tag.artist = artist
         mp3_file.tag.album = album
         mp3_file.tag.album_artist = album_artist
         mp3_file.tag.title = song_title
         mp3_file.tag.track_num = track_num
-
         mp3_file.tag.save()
 
 
