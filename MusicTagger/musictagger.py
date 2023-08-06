@@ -6,6 +6,7 @@ import os
 import eyed3
 import requests
 import glob
+import urllib.request
 
 app = FastAPI()
 
@@ -112,23 +113,28 @@ async def download_youtube_video_mp4(url: str, file_name=None):
         raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
     
 # Youtube Thumbnail Request
+# work in progress
 @app.get("/youtubethumbnaildownload")
-async def download_youtube_thumbnail(url: str):
+async def download_youtube_thumbnail(url: str, file_name=None):
     try:
 
         # Downloades mp4 of Youtube Video to 
         # musictagger folder using pytube API
         yt_video = YouTube(url)
-        mp4_audio_stream = yt_video.streams.get_highest_resolution()
-        mp4_title = mp4_audio_stream.title
-        mp4_audio_stream.download()
+        thumbnail_url = yt_video.thumbnail_url
+
+        # Download thumbnail to current directory
+        if file_name == None:
+            mp4_stream = yt_video.streams.get_highest_resolution()
+            file_name = mp4_stream.title
+        urllib.request.urlretrieve(thumbnail_url, f"{file_name}.jpg")
 
         # Moves file to downloads folder
         downloads_path = str(Path.home() / "Downloads")        
-        os.rename(f"{os.getcwd()}/{mp4_title}.mp4", f"{downloads_path}/{mp4_title}.mp4")
+        os.rename(f"{os.getcwd()}/{file_name}.jpg", f"{downloads_path}/{file_name}.jpg")
 
         # Success message
-        return {"message": f"{mp4_title}.mp4 downloaded successfully to downloads folder!"}
+        return {"message": f"{file_name}.jpg downloaded successfully to downloads folder!"}
     
     except KeyError:
         raise HTTPException(status_code=400, detail="Error: Video is not available or cannot be downloaded")
@@ -136,11 +142,8 @@ async def download_youtube_thumbnail(url: str):
         raise HTTPException(status_code=400, detail="Error: Invalid URL")
     except Exception as e:
         raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
-    
-
 
 # Untagged MP3 to Tagged MP3 Request
-# work in progress
 @app.get("/mp3tagger")
 async def download_tagged_song_from_downloads(file_name: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None, cover_url=None):
     try:
