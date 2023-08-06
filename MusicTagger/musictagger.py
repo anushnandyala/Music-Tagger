@@ -125,16 +125,19 @@ async def download_youtube_playlist_mp4(url: str, folder_name=None):
         path = os.path.join(f"{os.getcwd()}", f"{playlist_title}")
         os.mkdir(path)
 
+        # Download each video and move to folder
         for yt_video in yt_playlist.videos:
+            # download video
             mp4_audio_stream = yt_video.streams.get_highest_resolution()
             mp4_title = mp4_audio_stream.title
             mp4_audio_stream.download()
-            #renames video file
+            # renames video file
             file = glob.glob(f"{os.getcwd()}/**/*.mp4", recursive = True)
             os.rename(file[0], f"{os.getcwd()}/video.mp4")
+            # move video to folder
             os.rename(f"{os.getcwd()}/video.mp4", f"{os.getcwd()}/{playlist_title}/{mp4_title}.mp4")
 
-        # Moves file to downloads folder
+        # Moves folder to downloads
         downloads_path = str(Path.home() / "Downloads")        
         os.rename(f"{os.getcwd()}/{playlist_title}", f"{downloads_path}/{playlist_title}")
 
