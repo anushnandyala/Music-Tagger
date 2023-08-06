@@ -39,7 +39,7 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
         mp3_file.tag.track_num = track_num
         mp3_file.tag.save()
 
-        #Tags image from URL
+        #Tags image to mp3 metadata from URL
         cover = requests.get(cover_url)
         mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
         mp3_file.tag.save()
