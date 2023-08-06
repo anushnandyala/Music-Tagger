@@ -39,13 +39,37 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
         mp3_file.tag.track_num = track_num
         mp3_file.tag.save()
 
-        #Tags image to mp3 metadata from URL
+        # Tags image to mp3 metadata from URL
         cover = requests.get(cover_url)
         mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
         mp3_file.tag.save()
 
+        # Success message
+        return {"message": f"{song_file}.mp3 downloaded successfully!"}
+    
+    except KeyError:
+        raise HTTPException(status_code=400, detail="Error: Video is not available or cannot be downloaded")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Error: Invalid URL")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
+    
 
-        return {"message": f"{song_title} downloaded successfully!"}
+# Youtube to MP4 Request
+@app.get("/youtubetomp4")
+async def download_youtube_video(url: str):
+    try:
+
+        # Downloades mp4 of Youtube Video to 
+        # musictagger folder using pytube API
+        yt_video = YouTube(url)
+        mp4_audio_stream = yt_video.streams.get_highest_resolution()
+        mp4_title = mp4_audio_stream.title
+        mp4_audio_stream.download()
+
+        # Success message
+        return {"message": f"{mp4_title}.mp4 downloaded successfully!"}
+    
     except KeyError:
         raise HTTPException(status_code=400, detail="Error: Video is not available or cannot be downloaded")
     except ValueError:
@@ -57,7 +81,7 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
 
 # Untagged MP3 to Tagged MP3 Request
 # work in progress
-@app.get("/mp3totaggedmp3")
+@app.get("/mp3tagger")
 async def download_tagged_song(url: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None, cover_url=None):
     try:
 
