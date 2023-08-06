@@ -9,7 +9,7 @@ app = FastAPI()
 
 # Youtube to Tagged MP3 Request
 @app.get("/youtubetotaggedmp3")
-async def download_youtube_video(url: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None):
+async def download_youtube_video(file_path: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None):
     try:
 
         # Downloades mp4 of Youtube Video to 
