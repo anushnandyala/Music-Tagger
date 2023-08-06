@@ -256,7 +256,7 @@ async def download_youtube_thumbnail(url: str, file_name=None):
 
 # Untagged MP3 to Tagged MP3 Request
 @app.get("/mp3tagger")
-async def download_tagged_song_from_downloads(file_name: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None, cover_url=None):
+async def tag_song_from_downloads(file_name: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None, cover_url=None):
     try:
 
         downloads_path = str(Path.home() / "Downloads")
