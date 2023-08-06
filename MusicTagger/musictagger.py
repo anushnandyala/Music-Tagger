@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pytube import YouTube
+from pathlib import Path
 import moviepy.editor as mp
 import os
 import eyed3
@@ -44,8 +45,12 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
         mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
         mp3_file.tag.save()
 
+        # Moves file to downloads folder
+        downloads_path = str(Path.home() / "Downloads")        
+        os.rename(f"{os.getcwd()}/{song_file}.mp3", f"{downloads_path}/{song_file}.mp3")
+
         # Success message
-        return {"message": f"{song_file}.mp3 downloaded successfully!"}
+        return {"message": f"{song_file}.mp3 downloaded successfully to downloads folder!"}
     
     except KeyError:
         raise HTTPException(status_code=400, detail="Error: Video is not available or cannot be downloaded")
@@ -67,8 +72,12 @@ async def download_youtube_video(url: str):
         mp4_title = mp4_audio_stream.title
         mp4_audio_stream.download()
 
+        # Moves file to downloads folder
+        downloads_path = str(Path.home() / "Downloads")        
+        os.rename(f"{os.getcwd()}/{mp4_title}.mp4", f"{downloads_path}/{mp4_title}.mp4")
+
         # Success message
-        return {"message": f"{mp4_title}.mp4 downloaded successfully!"}
+        return {"message": f"{mp4_title}.mp4 downloaded successfully to downloads folder!"}
     
     except KeyError:
         raise HTTPException(status_code=400, detail="Error: Video is not available or cannot be downloaded")
