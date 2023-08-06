@@ -5,6 +5,7 @@ import moviepy.editor as mp
 import os
 import eyed3
 import requests
+import glob
 
 app = FastAPI()
 
@@ -21,14 +22,22 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
         mp4_title = mp4_audio_stream.title
         mp4_audio_stream.download()
 
+        # renames video file
+        file = glob.glob(f"{os.getcwd()}/**/*.mp4", recursive = True)
+        os.rename(file[0], f"{os.getcwd()}/video.mp4")
+
         # Converts mp4 video to a new mp3 file saved to 
         # musictagger folder using moviepy API
-        mp4_audio = mp.VideoFileClip(f"{mp4_title}.mp4")
-        song_file = song_title.lower().replace(' ', '')
+        #mp4_audio = mp.VideoFileClip(f"{mp4_title}.mp4")
+        mp4_audio = mp.VideoFileClip("video.mp4")
+        if song_title != None:
+            song_file = song_title.lower().replace(' ', '')
+        else:
+            song_file = mp4_title.lower().replace(' ', '')
         mp4_audio.audio.write_audiofile(f"{song_file}.mp3")
 
         # Deletes mp4 video from folder
-        os.remove(f"{mp4_title}.mp4")
+        os.remove("video.mp4")
 
         # Adds artist, album, album artist, song title, & track number 
         # metadata to mp3 file using eyed3 API
@@ -41,9 +50,11 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
         mp3_file.tag.save()
 
         # Tags image to mp3 metadata from URL
-        cover = requests.get(cover_url)
-        mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
-        mp3_file.tag.save()
+        if cover_url != None:
+            cover = requests.get(cover_url)
+            mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
+            mp3_file.tag.save()
+        
 
         # Moves file to downloads folder
         downloads_path = str(Path.home() / "Downloads")        
