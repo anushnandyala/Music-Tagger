@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pytube import YouTube
+from pytube import Playlist
 from pathlib import Path
 import moviepy.editor as mp
 import os
@@ -37,7 +38,6 @@ async def download_youtube_video_tagged_mp3(url: str, file_name=None, song_title
                 song_file = song_title.lower().replace(' ', '')
             else:
                 song_file = mp4_title.lower().replace(' ', '')
-        
         mp4_audio.audio.write_audiofile(f"{song_file}.mp3")
 
         # Deletes mp4 video from folder
@@ -80,7 +80,7 @@ async def download_youtube_video_tagged_mp3(url: str, file_name=None, song_title
     
 
 # Youtube to MP4 Request
-@app.get("/youtubetomp4")
+@app.get("/downloadyoutubevideomp4")
 async def download_youtube_video_mp4(url: str, file_name=None):
     try:
 
@@ -112,14 +112,50 @@ async def download_youtube_video_mp4(url: str, file_name=None):
     except Exception as e:
         raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
     
+# Youtube Playlist to MP4 Request
+@app.get("/downloadyoutubeplaylistmp4")
+async def download_youtube_playlist_mp4(url: str, folder_name=None):
+    try:
+
+        # Make Playlist object
+        yt_playlist = Playlist(url)
+
+        # Make playlist folder
+        playlist_title = folder_name if folder_name != None else yt_playlist.title
+        path = os.path.join(f"{os.getcwd()}", f"{playlist_title}")
+        os.mkdir(path)
+
+        for yt_video in yt_playlist.videos:
+            mp4_audio_stream = yt_video.streams.get_highest_resolution()
+            mp4_title = mp4_audio_stream.title
+            mp4_audio_stream.download()
+            #renames video file
+            file = glob.glob(f"{os.getcwd()}/**/*.mp4", recursive = True)
+            os.rename(file[0], f"{os.getcwd()}/video.mp4")
+            os.rename(f"{os.getcwd()}/video.mp4", f"{os.getcwd()}/{playlist_title}/{mp4_title}.mp4")
+
+        # Moves file to downloads folder
+        downloads_path = str(Path.home() / "Downloads")        
+        os.rename(f"{os.getcwd()}/{playlist_title}", f"{downloads_path}/{playlist_title}")
+
+        # Success message
+        return {"message": f"{playlist_title} folder downloaded successfully to downloads folder!"}
+    
+    except KeyError:
+        raise HTTPException(status_code=400, detail="Error: Video is not available or cannot be downloaded")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Error: Invalid URL")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
+    
 # Youtube Thumbnail Request
-@app.get("/youtubethumbnaildownload")
+@app.get("/downloadyoutubethumbnail")
 async def download_youtube_thumbnail(url: str, file_name=None):
     try:
 
         # Downloades mp4 of Youtube Video to 
         # musictagger folder using pytube API
-        yt_video = YouTube(url)
+        yt_video = Playlist(url)
         thumbnail_url = yt_video.thumbnail_url
 
         # Download thumbnail to current directory
