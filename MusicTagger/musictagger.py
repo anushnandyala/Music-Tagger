@@ -46,10 +46,10 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
     except Exception as e:
         raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
     
-# SoundCloud to Tagged MP3 Request
+# Untagged MP3 to Tagged MP3 Request
 # work in progress
-@app.get("/soundcloudtotaggedmp3")
-async def download_soundcloud_song(url: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None):
+@app.get("/mp3totaggedmp3")
+async def download_tagged_song(url: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None):
     try:
         
         # Downloades mp4 of Youtube Video to 
