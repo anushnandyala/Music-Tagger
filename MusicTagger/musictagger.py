@@ -113,7 +113,6 @@ async def download_youtube_video_mp4(url: str, file_name=None):
         raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
     
 # Youtube Thumbnail Request
-# work in progress
 @app.get("/youtubethumbnaildownload")
 async def download_youtube_thumbnail(url: str, file_name=None):
     try:
