@@ -79,6 +79,79 @@ async def download_youtube_video_tagged_mp3(url: str, file_name=None, song_title
         raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
     
 
+# Youtube Playlist to Tagged MP3 Request
+@app.get("/downloadyoutubeplaylistmp3")
+async def download_youtube_playlist_tagged_mp3(url: str, folder_name=None, artist=None, album=None, album_artist=None, cover_url=None):
+    try:
+
+        # Make Playlist object
+        yt_playlist = Playlist(url)
+
+        # Make playlist folder
+        playlist_title = folder_name if folder_name != None else yt_playlist.title
+        path = os.path.join(f"{os.getcwd()}", f"{playlist_title}")
+        os.mkdir(path)
+
+        # Download each video and move to folder
+        track_num = 0
+        for yt_video in yt_playlist.videos:
+
+            # download video
+            mp4_audio_stream = yt_video.streams.get_highest_resolution()
+            mp4_title = mp4_audio_stream.title
+            mp4_audio_stream.download()
+
+            # renames video file
+            file = glob.glob(f"{os.getcwd()}/**/*.mp4", recursive = True)
+            os.rename(file[0], f"{os.getcwd()}/video.mp4")
+
+            # convert mp4 to mp3
+            mp4_audio = mp.VideoFileClip("video.mp4")
+            song_file = mp4_title.lower().replace(' ', '')
+            mp4_audio.audio.write_audiofile(f"{song_file}.mp3")
+
+            # Deletes mp4 video from folder
+            os.remove("video.mp4")
+
+            # Adds artist, album, album artist, song title, & track number 
+            # metadata to mp3 file using eyed3 API
+            mp3_file = eyed3.load(f"{song_file}.mp3")
+            mp3_file.tag.artist = artist
+            mp3_file.tag.album = album if album != None else playlist_title
+            mp3_file.tag.album_artist = album_artist
+            mp3_file.tag.title = mp4_title
+            mp3_file.tag.track_num = track_num + 1
+            mp3_file.tag.save()
+
+            # Tags image to mp3 metadata from URL
+            if cover_url != None:
+                cover = requests.get(cover_url)
+                mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
+                mp3_file.tag.save()
+            else:
+                cover_url = yt_video.thumbnail_url
+                cover = requests.get(cover_url)
+                mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
+                mp3_file.tag.save()
+
+            # move song to folder
+            os.rename(f"{os.getcwd()}/{song_file}.mp3", f"{os.getcwd()}/{playlist_title}/{song_file}.mp3")
+
+        # Moves folder to downloads
+        downloads_path = str(Path.home() / "Downloads")        
+        os.rename(f"{os.getcwd()}/{playlist_title}", f"{downloads_path}/{playlist_title}")
+
+        # Success message
+        return {"message": f"{playlist_title} folder downloaded successfully to downloads folder!"}
+    
+    except KeyError:
+        raise HTTPException(status_code=400, detail="Error: Video is not available or cannot be downloaded")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Error: Invalid URL")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
+    
+
 # Youtube to MP4 Request
 @app.get("/downloadyoutubevideomp4")
 async def download_youtube_video_mp4(url: str, file_name=None):
