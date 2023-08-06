@@ -80,7 +80,40 @@ async def download_youtube_video_tagged_mp3(url: str, file_name=None, song_title
 
 # Youtube to MP4 Request
 @app.get("/youtubetomp4")
-async def download_youtube_video_mp4(url: str):
+async def download_youtube_video_mp4(url: str, file_name=None):
+    try:
+
+        # Downloades mp4 of Youtube Video to 
+        # musictagger folder using pytube API
+        yt_video = YouTube(url)
+        mp4_audio_stream = yt_video.streams.get_highest_resolution()
+        mp4_title = mp4_audio_stream.title
+        mp4_audio_stream.download()
+
+        # renames video file
+        file = glob.glob(f"{os.getcwd()}/**/*.mp4", recursive = True)
+        os.rename(file[0], f"{os.getcwd()}/video.mp4")
+
+        if file_name == None:
+            file_name = mp4_title
+
+        # Moves file to downloads folder
+        downloads_path = str(Path.home() / "Downloads")        
+        os.rename(f"{os.getcwd()}/video.mp4", f"{downloads_path}/{file_name}.mp4")
+
+        # Success message
+        return {"message": f"{file_name}.mp4 downloaded successfully to downloads folder!"}
+    
+    except KeyError:
+        raise HTTPException(status_code=400, detail="Error: Video is not available or cannot be downloaded")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Error: Invalid URL")
+    except Exception as e:
+        raise HTTPException(status_code=400, detail="Error downloading video: " + str(e))
+    
+# Youtube Thumbnail Request
+@app.get("/youtubethumbnaildownload")
+async def download_youtube_thumbnail(url: str):
     try:
 
         # Downloades mp4 of Youtube Video to 
