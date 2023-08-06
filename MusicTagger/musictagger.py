@@ -9,10 +9,9 @@ import glob
 
 app = FastAPI()
 
-
 # Youtube to Tagged MP3 Request
 @app.get("/youtubetotaggedmp3")
-async def download_youtube_video(url: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None, cover_url=None):
+async def download_youtube_video_tagged_mp3(url: str, file_name=None, song_title=None, artist=None, album=None, album_artist=None, track_num=None, cover_url=None):
     try:
 
         # Downloades mp4 of Youtube Video to 
@@ -30,10 +29,14 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
         # musictagger folder using moviepy API
         #mp4_audio = mp.VideoFileClip(f"{mp4_title}.mp4")
         mp4_audio = mp.VideoFileClip("video.mp4")
-        if song_title != None:
-            song_file = song_title.lower().replace(' ', '')
+        if file_name != None:
+            song_file = file_name
         else:
-            song_file = mp4_title.lower().replace(' ', '')
+            if song_title != None:
+                song_file = song_title.lower().replace(' ', '')
+            else:
+                song_file = mp4_title.lower().replace(' ', '')
+        
         mp4_audio.audio.write_audiofile(f"{song_file}.mp3")
 
         # Deletes mp4 video from folder
@@ -54,7 +57,11 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
             cover = requests.get(cover_url)
             mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
             mp3_file.tag.save()
-        
+        else:
+            cover_url = yt_video.thumbnail_url
+            cover = requests.get(cover_url)
+            mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
+            mp3_file.tag.save()
 
         # Moves file to downloads folder
         downloads_path = str(Path.home() / "Downloads")        
@@ -73,7 +80,7 @@ async def download_youtube_video(url: str, song_title=None, artist=None, album=N
 
 # Youtube to MP4 Request
 @app.get("/youtubetomp4")
-async def download_youtube_video(url: str):
+async def download_youtube_video_mp4(url: str):
     try:
 
         # Downloades mp4 of Youtube Video to 
@@ -102,28 +109,15 @@ async def download_youtube_video(url: str):
 # Untagged MP3 to Tagged MP3 Request
 # work in progress
 @app.get("/mp3tagger")
-async def download_tagged_song(url: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None, cover_url=None):
+async def download_tagged_song_from_downloads(file_name: str, song_title=None, artist=None, album=None, album_artist=None, track_num=None, cover_url=None):
     try:
 
-        # Downloades mp4 of Youtube Video to 
-        # musictagger folder using pytube API
-        yt_video = YouTube(url)
-        mp4_audio_stream = yt_video.streams.get_highest_resolution()
-        mp4_title = mp4_audio_stream.title
-        mp4_audio_stream.download()
-
-        # Converts mp4 video to a new mp3 file saved to 
-        # musictagger folder using moviepy API
-        mp4_audio = mp.VideoFileClip(f"{mp4_title}.mp4")
-        song_file = song_title.lower().replace(' ', '')
-        mp4_audio.audio.write_audiofile(f"{song_file}.mp3")
-
-        # Deletes mp4 video from folder
-        os.remove(f"{mp4_title}.mp4")
+        downloads_path = str(Path.home() / "Downloads")
+        os.rename(f"{downloads_path}/{file_name}.mp3", f"{os.getcwd()}/{file_name}.mp3")
 
         # Adds artist, album, album artist, song title, & track number 
         # metadata to mp3 file using eyed3 API
-        mp3_file = eyed3.load(f"{song_file}.mp3")
+        mp3_file = eyed3.load(f"{file_name}.mp3")
         mp3_file.tag.artist = artist
         mp3_file.tag.album = album
         mp3_file.tag.album_artist = album_artist
@@ -131,11 +125,15 @@ async def download_tagged_song(url: str, song_title=None, artist=None, album=Non
         mp3_file.tag.track_num = track_num
         mp3_file.tag.save()
 
-        #Tags image from URL
-        cover = requests.get(cover_url)
-        mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
-        mp3_file.tag.save()
+        # Tags image to mp3 metadata from URL
+        if cover_url != None:
+            cover = requests.get(cover_url)
+            mp3_file.tag.images.set(3, cover.content , "image/jpeg" ,u"Cover")
+            mp3_file.tag.save()
 
+        # Moves file to downloads folder
+        downloads_path = str(Path.home() / "Downloads")        
+        os.rename(f"{os.getcwd()}/{file_name}.mp3", f"{downloads_path}/{file_name}.mp3")
 
         return {"message": f"{song_title} downloaded successfully!"}
     except KeyError:
