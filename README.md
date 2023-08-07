@@ -1,2 +1,2 @@
-# Projects
-Computer Science Projects
+# Music Tagger
+Install fastAPI, uvicorn, pytube, moviepy, ffmpeg, eyed3
